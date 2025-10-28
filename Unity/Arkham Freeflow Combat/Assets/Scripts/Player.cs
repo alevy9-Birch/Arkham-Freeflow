@@ -1,6 +1,7 @@
 using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.XR;
 
@@ -28,9 +29,9 @@ public class Player : MonoBehaviour
     public float cameraSensativity = 10f;
     Vector3 lookDirection = new Vector3 (0f, 0f, 1f);
     bool attacking = false;
-    LayerMask enemyMask;
+    public LayerMask enemyMask;
     RaycastHit info;
-    public float[] attackDuration = new float[3];
+    public float[] attackDuration;
     public float hitDistance = 1f;
     Coroutine currentAttack;
 
@@ -39,6 +40,8 @@ public class Player : MonoBehaviour
 
     float startAttackTime;
     float startAttackPosition;
+    private int attackRange = 8;
+    int lastAttack = -1;
 
     private void OnEnable()
     {
@@ -61,6 +64,8 @@ public class Player : MonoBehaviour
         m_moveInput = InputSystem.actions.FindAction("Move");
         m_sprintInput = InputSystem.actions.FindAction("Sprint");
 
+        Cursor.lockState = CursorLockMode.Locked;
+
     }
 
     private void Update()
@@ -75,50 +80,55 @@ public class Player : MonoBehaviour
         {
             Move(moveInput);
             animator.speed = currentSpeed / speed;
+
+            if (Vector3.Distance(transform.position, currentTarget.transform.position) > attackRange + 2)
+            {
+                currentTarget = null;
+            }
+            else if (m_attackInput.WasPressedThisFrame() && currentTarget != null)
+            {
+                currentAttack = StartCoroutine(Attack());
+            }
         }
 
-        if (m_attackInput.WasPressedThisFrame() && currentTarget != null)
-        {
-            attacking = true;
-            currentAttack = StartCoroutine(Attack());
-        }
+        RotateTowards(lookDirection.normalized);
+
     }
 
     IEnumerator Attack()
     {
+        attacking = true;
         int attackNum = Random.Range(0, 3);
+        if (attackNum == lastAttack) { attackNum++; attackNum %= 3; }
+        lastAttack = attackNum;
         animator.SetInteger("AttackNum", attackNum);
         animator.SetTrigger("Attack");
+        animator.speed = 1;
         Vector3 startPos = transform.position;
         
-        float timer = 0;
-        while (timer < attackDuration[attackNum])
+        float timer = 0f;
+        while (timer < attackDuration[attackNum] && currentTarget != null)
         {
             timer += Time.deltaTime;
-            transform.forward = (currentTarget.transform.position - transform.position).normalized;
-            transform.position = Vector3.Lerp(startPos, currentTarget.transform.position + (currentTarget.transform.position-transform.position).normalized * hitDistance, timer / attackDuration[attackNum]);
+            lookDirection = (currentTarget.transform.position - transform.position).normalized;
+            transform.position = Vector3.Lerp(startPos, currentTarget.transform.position - (transform.forward * hitDistance), timer / attackDuration[attackNum]);
             yield return null;
         }
-
-        currentTarget.Hit(1);
-        attacking = false;
     }
 
     private void Move(float x, float y)
     {
-        Vector3 targetDirection = (cameraRig.right * x + cameraRig.forward * y).normalized;
-        movement = Vector2.MoveTowards(movement, new Vector2(targetDirection.x, targetDirection.z), acceleration * Time.deltaTime);
+        Vector3 inputDirection = (cameraRig.right * x + cameraRig.forward * y).normalized;
 
-        if (Physics.SphereCast(transform.position, 3f, (targetDirection + cameraRig.forward).normalized * 0.01f, out info, 10, enemyMask))
+        if (x != 0 || y != 0) lookDirection = inputDirection;
+
+        movement = Vector2.MoveTowards(movement, new Vector2(inputDirection.x, inputDirection.z), acceleration * Time.deltaTime);
+        if (Physics.SphereCast(transform.position, 3f, inputDirection, out info, attackRange, enemyMask))
         {
             currentTarget = info.collider.gameObject.GetComponent<Enemy>();
         }
         
         controller.Move((Vector3.right * movement.x + Vector3.forward * movement.y) * currentSpeed * Time.deltaTime);
-
-        lookDirection = Vector3.Lerp(lookDirection, targetDirection, 0.5f * Time.deltaTime * currentSpeed);
-        if (x!=0 || y!=0)
-            RotateTowards(lookDirection.normalized);
 
         animator.SetFloat("MoveX", Vector3.Dot(controller.velocity, transform.right));
         animator.SetFloat("MoveY", Vector3.Dot(controller.velocity, transform.forward));
@@ -134,10 +144,10 @@ public class Player : MonoBehaviour
         Quaternion targetRotation = Quaternion.LookRotation(direction);
 
         // Smoothly rotate toward target
-        transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, turnSpeed * Time.deltaTime);
+        transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, turnSpeed * Time.deltaTime * currentSpeed);
     }
 
-    void Hit()
+    public void IsHit()
     {
         if (currentAttack != null) StopCoroutine(currentAttack);
         health -= 1;
@@ -145,6 +155,13 @@ public class Player : MonoBehaviour
         {
             Die();
         }
+    }
+
+    void Hit()
+    {
+        currentTarget.IsHit(1);
+        if (currentTarget.health <= 0) currentTarget = null;
+        attacking = false;
     }
 
     void Die()
