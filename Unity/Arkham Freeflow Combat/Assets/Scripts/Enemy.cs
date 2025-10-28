@@ -12,7 +12,7 @@ public class Enemy : MonoBehaviour
     bool retreating = false;
     int clockwise;
     Vector2 movement;
-    public float acceleration = 1f;
+    float acceleration = 1f;
 
     public enum EnemyState
     {
@@ -28,8 +28,6 @@ public class Enemy : MonoBehaviour
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
         player = GameObject.FindWithTag("Player");
-
-        clockwise = Random.value < 0.5f ? -1 : 1;
     }
 
     private void Update()
@@ -84,6 +82,13 @@ public class Enemy : MonoBehaviour
         animator.SetInteger("AttackNum", Random.Range(0, 3));
         animator.SetTrigger("Attack");
     }
+
+    public void Circle()
+    {
+        clockwise = Random.value < 0.5f ? -1 : 1;
+        state = EnemyState.Circulating;
+    }
+
     public void Hit(int dmg)
     {
         health -= dmg;
@@ -95,6 +100,7 @@ public class Enemy : MonoBehaviour
         state = EnemyState.Stunned;
         animator.SetTrigger("Hit");
     }
+
     public void Die()
     {
         animator.SetTrigger("Die");

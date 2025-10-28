@@ -202,7 +202,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: 905b85fb48baee24581cc56438f2174f, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: fcc278f25772cd441a50896a0d5f3c22, type: 2}
+      objectReference: {fileID: 9100000, guid: eeb4125cb4e350f4087100cc3ade5504, type: 2}
     - target: {fileID: 5866666021909216657, guid: 905b85fb48baee24581cc56438f2174f, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
@@ -217,6 +217,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 905b85fb48baee24581cc56438f2174f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1602815475}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 905b85fb48baee24581cc56438f2174f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1602815478}
   m_SourcePrefab: {fileID: 100100000, guid: 905b85fb48baee24581cc56438f2174f, type: 3}
 --- !u!1 &330585543
 GameObject:
@@ -304,13 +307,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalRotation: {x: 0.19576733, y: -0, z: -0, w: 0.9806504}
+  m_LocalPosition: {x: 0.18, y: 2.98, z: -2.86}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_Father: {fileID: 1991945010}
+  m_LocalEulerAnglesHint: {x: 22.579, y: 0, z: 0}
 --- !u!114 &330585547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -687,7 +690,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
   state: 0
-  speed: 1
 --- !u!143 &1294848374
 CharacterController:
   m_ObjectHideFlags: 0
@@ -769,6 +771,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Ninja
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 58d4fa1b149cecc46bc5ce6e0d515ceb, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 58d4fa1b149cecc46bc5ce6e0d515ceb, type: 3}
+      propertyPath: m_TagString
+      value: Enemy
+      objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: 58d4fa1b149cecc46bc5ce6e0d515ceb, type: 3}
       propertyPath: m_Enabled
       value: 1
@@ -790,10 +800,10 @@ PrefabInstance:
       addedObject: {fileID: 1659197521}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 58d4fa1b149cecc46bc5ce6e0d515ceb, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1659197520}
+      addedObject: {fileID: 1659197524}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 58d4fa1b149cecc46bc5ce6e0d515ceb, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1659197524}
+      addedObject: {fileID: 1659197520}
   m_SourcePrefab: {fileID: 100100000, guid: 58d4fa1b149cecc46bc5ce6e0d515ceb, type: 3}
 --- !u!1 &1602815471 stripped
 GameObject:
@@ -852,6 +862,25 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1602815478
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1602815471}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92c2c6d668cf8974ca5ccd28c2f27b4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Player
+  InputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  cameraRig: {fileID: 1991945010}
+  acceleration: 5
+  speed: 2
+  sprintSpeedMult: 2
+  turnSpeed: 5
+  cameraSensativity: 0.1
 --- !u!1 &1659197519 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 58d4fa1b149cecc46bc5ce6e0d515ceb, type: 3}
@@ -870,7 +899,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
   state: 0
-  speed: 1
 --- !u!143 &1659197521
 CharacterController:
   m_ObjectHideFlags: 0
@@ -923,6 +951,38 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!1 &1991945009
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1991945010}
+  m_Layer: 0
+  m_Name: Camera Rig
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1991945010
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1991945009}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.7, y: 0.53, z: 2.63}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 330585546}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2073310345
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -979,6 +1039,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Ninja (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 58d4fa1b149cecc46bc5ce6e0d515ceb, type: 3}
+      propertyPath: m_Layer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 58d4fa1b149cecc46bc5ce6e0d515ceb, type: 3}
+      propertyPath: m_TagString
+      value: Enemy
+      objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: 58d4fa1b149cecc46bc5ce6e0d515ceb, type: 3}
       propertyPath: m_Enabled
       value: 1
@@ -1000,16 +1068,16 @@ PrefabInstance:
       addedObject: {fileID: 1294848374}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 58d4fa1b149cecc46bc5ce6e0d515ceb, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1294848373}
+      addedObject: {fileID: 1294848372}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 58d4fa1b149cecc46bc5ce6e0d515ceb, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1294848372}
+      addedObject: {fileID: 1294848373}
   m_SourcePrefab: {fileID: 100100000, guid: 58d4fa1b149cecc46bc5ce6e0d515ceb, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 330585546}
+  - {fileID: 1991945010}
   - {fileID: 410087041}
   - {fileID: 832575519}
   - {fileID: 1014875286}
