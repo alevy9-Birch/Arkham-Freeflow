@@ -28,13 +28,16 @@ public class Enemy : MonoBehaviour
     float stunStartTime;
     static float stunDuration = 0.8f;
 
+    public GameObject counterIcon;
+
     public enum EnemyState
     {
         Idle,
         Attacking,
         Retreating,
         Circulating,
-        Stunned
+        Stunned,
+        Dead
     }
 
     void Awake()
@@ -66,6 +69,8 @@ public class Enemy : MonoBehaviour
             case EnemyState.Stunned:
                 Stunned();
                 break;
+            case EnemyState.Dead:
+                break;
         }
 
         animator.speed = 1f + movement.magnitude / 2f;
@@ -89,8 +94,10 @@ public class Enemy : MonoBehaviour
 
     void Attacking()
     {
+        targetDistance = 2f;
         transform.forward = player.transform.position - transform.position;
-        Move(0, 1);
+        float distance = DistanceToPlayer();
+        Move(0, distance - targetDistance, 2f);
     }
 
     void Retreating()
@@ -163,9 +170,13 @@ public class Enemy : MonoBehaviour
 
     public void Attack()
     {
-        state = EnemyState.Attacking;
-        animator.SetInteger("AttackNum", Random.Range(0, 3));
         animator.SetTrigger("Attack");
+        SetCounterIcon(true);
+    }
+
+    public void SetCounterIcon(bool active)
+    {
+        counterIcon.SetActive(active);
     }
 
     public void Circle()
@@ -177,6 +188,8 @@ public class Enemy : MonoBehaviour
     public void IsHit(int dmg)
     {
         health -= dmg;
+        EnemyAI.Instance.Hit(this);
+        SetCounterIcon(false);
         if (health <= 0)
         {
             Die();
@@ -205,24 +218,43 @@ public class Enemy : MonoBehaviour
     void Hit()
     {
         RaycastHit hit;
-        if (Physics.SphereCast(transform.position, 1.5f, transform.forward, out hit, 1.5f, playerMask))
+        if (Vector3.Distance(player.transform.position, transform.position) < 3f)
         {
-            player.GetComponent<Player>().IsHit();
+            if (!EnemyAI.Instance.IsCountered())
+            {
+                player.GetComponent<Player>().IsHit();
+                EnemyAI.Instance.attackers.Remove(this);
+            } 
+            else
+                IsHit(2);
         }
+        else
+        {
+            if (EnemyAI.Instance.IsCountered())
+                IsHit(2);
+        }
+        SetCounterIcon(false);
+        state = EnemyState.Retreating;
+        EnemyAI.Instance.attackers.Remove(this);
     }
 
     public void Die()
     {
         animator.SetTrigger("Die");
+        state = EnemyState.Dead;
+        EnemyAI.Instance.Killed(this);
         this.enabled = false;
+        Destroy(controller);
+        Destroy(GetComponent<Rigidbody>());
+        Destroy(this);
     }
 
-    private void Move(float x, float y)
+    private void Move(float x, float y, float speedMult = 1f)
     {
         Vector2 input = new Vector2(x, y).normalized;
         
         movement = Vector2.MoveTowards(movement, new Vector2(input.x, input.y), acceleration * Time.deltaTime);
-        controller.Move((transform.right * movement.x + transform.forward * movement.y) * speed * Time.deltaTime);
+        controller.Move((transform.right * movement.x + transform.forward * movement.y) * speed * speedMult * Time.deltaTime);
 
         animator.SetFloat("MoveX", Vector3.Dot(controller.velocity, transform.right));
         animator.SetFloat("MoveY", Vector3.Dot(controller.velocity, transform.forward));
