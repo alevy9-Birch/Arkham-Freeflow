@@ -201,10 +201,10 @@ public class Player : MonoBehaviour
         transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, turnSpeed * Time.deltaTime * currentSpeed);
     }
 
-    public void IsHit()
+    public void IsHit(int dmg)
     {
         if (currentAttack != null) StopCoroutine(currentAttack);
-        health -= 1;
+        health -= dmg;
         animator.SetTrigger("Hit");
         if (health <= 0)
         {

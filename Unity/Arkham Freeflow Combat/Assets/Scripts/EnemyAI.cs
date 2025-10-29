@@ -11,12 +11,15 @@ public class EnemyAI : MonoBehaviour
 
     Coroutine attackController;
     public static EnemyAI Instance;
-    public float attackDelay = 2f;
+    public float attackDelay = 2.5f;
     public bool counterable = false;
+    GameObject player;
 
 
     void Awake()
     {
+        player = GameObject.FindWithTag("Player");
+
         if (Instance == null)
             Instance = this;
         else
@@ -59,7 +62,7 @@ public class EnemyAI : MonoBehaviour
         for (int i = 0; i < numOfAttackers; i++)
         {
             Enemy enemy = enemiesList[Random.Range(0, enemiesList.Count)];
-            if (enemy.state != Enemy.EnemyState.Stunned)
+            if (enemy.state != Enemy.EnemyState.Stunned && Vector3.Distance(enemy.transform.position, player.transform.position) < enemy.attackRange)
             {
                 attackers.Add(enemy);
                 enemy.state = Enemy.EnemyState.Attacking;

@@ -15,14 +15,16 @@ public class Enemy : MonoBehaviour
     int clockwise = 1;
     Vector2 movement;
     float acceleration = 1f;
-    static float speed = 1.5f;
+    public float speed = 1.5f;
+    public int dmg = 1;
 
     private float rayDistance = 1f;
     public LayerMask avoidWhileCirculating;
     public LayerMask playerMask;
 
-    static int minDistance = 3;
-    static int maxDistance = 8;
+    public int minDistance = 3;
+    public int maxDistance = 8;
+    public float attackRange = 6;
     float targetDistance = 4;
 
     float stunStartTime;
@@ -222,7 +224,7 @@ public class Enemy : MonoBehaviour
         {
             if (!EnemyAI.Instance.IsCountered())
             {
-                player.GetComponent<Player>().IsHit();
+                player.GetComponent<Player>().IsHit(dmg);
                 EnemyAI.Instance.attackers.Remove(this);
             } 
             else
