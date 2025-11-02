@@ -1,5 +1,3 @@
-using System.Collections;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
@@ -26,6 +24,7 @@ public class Enemy : MonoBehaviour
     public int maxDistance = 8;
     public float attackRange = 6;
     float targetDistance = 4;
+    float y;
 
     float stunStartTime;
     static float stunDuration = 0.8f;
@@ -49,11 +48,12 @@ public class Enemy : MonoBehaviour
         player = GameObject.FindWithTag("Player");
 
         clockwise = Random.value < 0.5 ? -1 : 1;
+        y = transform.position.y;
     }
 
     private void Update()
     {
-        switch(state)
+        switch (state)
         {
             case EnemyState.Idle:
                 Idle();
@@ -195,6 +195,7 @@ public class Enemy : MonoBehaviour
         if (health <= 0)
         {
             Die();
+            EnemyAI.Instance.CheckCount(this);
             return;
         }
         Stun();
@@ -219,7 +220,6 @@ public class Enemy : MonoBehaviour
 
     void Hit()
     {
-        RaycastHit hit;
         if (Vector3.Distance(player.transform.position, transform.position) < 3f)
         {
             if (!EnemyAI.Instance.IsCountered())
@@ -249,6 +249,11 @@ public class Enemy : MonoBehaviour
         Destroy(controller);
         Destroy(GetComponent<Rigidbody>());
         Destroy(this);
+    }
+
+    public void FreezeAnimation()
+    {
+        animator.speed = 0;
     }
 
     private void Move(float x, float y, float speedMult = 1f)

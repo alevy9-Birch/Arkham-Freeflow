@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class EnemyAI : MonoBehaviour
 {
@@ -90,6 +91,7 @@ public class EnemyAI : MonoBehaviour
         if (counterCount > 0)
         {
             counterCount--;
+            player.GetComponent<Player>().Combo(2);
             return true;
         }
         else
@@ -117,6 +119,47 @@ public class EnemyAI : MonoBehaviour
         }
     }
 
+    IEnumerator EndCamera(Enemy enemy)
+    {
+        GameObject cam = Camera.main.gameObject;
+        cam.transform.SetParent(null);
+        Transform pointB = enemy.transform;
+        Transform pointC = player.transform;
+        float sideLength = 5f;
+        //Vector3 perpDir = Vector3.Cross(Vector3.up, player.transform.position - enemy.transform.position).normalized;
+        Vector3 B = pointB.position; B.y = 0;
+        Vector3 C = pointC.position; C.y = 0;
+        Vector3 M = (B + C) * 0.5f;
+        Vector3 BCdir = (C - B).normalized;
+        float baseLength = Vector3.Distance(B, C);
+        float halfBase = baseLength * 0.5f;
+        float height = Mathf.Sqrt(Mathf.Max(0, sideLength * sideLength - halfBase * halfBase));
+        Vector3 perpDir = Vector3.Cross(Vector3.up, BCdir).normalized;
+        Vector3 A1 = M + perpDir * height;
+        Vector3 A2 = M - perpDir * height;
+        Vector3 chosen = (Vector3.Distance(cam.transform.position, A1) < Vector3.Distance(cam.transform.position, A2)) ? A1 : A2;
+        chosen.y = 1.5f;
+
+        Vector3 camStart = cam.transform.position;
+        float startTime = Time.unscaledTime;
+        float duration = 3f;
+        while (Time.unscaledTime < startTime + duration)
+        {
+            cam.transform.position = Vector3.Slerp(camStart, chosen, (Time.unscaledTime - startTime) / duration);
+            Time.timeScale = Mathf.Lerp(Time.timeScale, 0.2f, (Time.unscaledTime - startTime) / duration);
+            Quaternion targetRotation = Quaternion.LookRotation(M - cam.transform.position);
+            cam.transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 5f * Time.unscaledDeltaTime);
+            yield return null;
+        }
+        startTime = Time.unscaledTime;
+        while (Time.unscaledTime < startTime + duration/2)
+        {
+            Time.timeScale = Mathf.Lerp(Time.timeScale, 1f, (Time.unscaledTime - startTime) / duration);
+            yield return null;
+        }
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
     public void Killed(Enemy enemy)
     {
         enemiesList.Remove(enemy);
@@ -130,6 +173,14 @@ public class EnemyAI : MonoBehaviour
     void WaitTime(float time)
     {
         StartCoroutine(DelayFunction(time));
+    }
+
+    public void CheckCount(Enemy enemy)
+    {
+        if (enemiesList.Count == 0)
+        {
+            StartCoroutine(EndCamera(enemy));
+        }
     }
 
     IEnumerator DelayFunction(float time)

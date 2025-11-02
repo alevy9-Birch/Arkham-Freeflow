@@ -1,9 +1,7 @@
 using System.Collections;
-using Unity.VisualScripting;
+using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.XR;
 using UnityEngine.SceneManagement;
 
 public class Player : MonoBehaviour
@@ -37,8 +35,16 @@ public class Player : MonoBehaviour
     Coroutine currentAttack;
     bool countering = false;
     bool multiCounter = false;
+    bool criticalStrike = false;
+    public int combo = 0;
+    int speedCombo;
+    public float criticalWindow = 2f;
+    public float comboTime;
+    public float comboResetTime = 10f;
+    public TextMeshProUGUI comboMeter;
+    float y;
 
-    Enemy currentTarget;
+    public Enemy currentTarget;
     Vector2 moveInput;
 
     float startAttackTime;
@@ -58,6 +64,7 @@ public class Player : MonoBehaviour
 
     void Awake()
     {
+        Time.timeScale = 1f;
         controller = GetComponent<CharacterController>();
         animator = GetComponent<Animator>();
 
@@ -68,13 +75,18 @@ public class Player : MonoBehaviour
         m_sprintInput = InputSystem.actions.FindAction("Sprint");
 
         Cursor.lockState = CursorLockMode.Locked;
-
     }
-
+    
     private void Update()
     {
+        speedCombo = Mathf.Clamp(combo, 0, 40);
+        if (combo == 0)
+            comboMeter.text = "";
+        else
+            comboMeter.text = "x" + combo.ToString();
+        
         cameraRig.position = Vector3.Lerp(cameraRig.position, transform.position, 0.5f);
-        cameraRig.Rotate(transform.up, m_lookInput.ReadValue<Vector2>().x * cameraSensativity);
+        cameraRig.Rotate(Vector3.up, m_lookInput.ReadValue<Vector2>().x * cameraSensativity);
 
         moveInput = m_moveInput.ReadValue<Vector2>();
         currentSpeed = m_sprintInput.IsPressed() ? Mathf.Lerp(currentSpeed, speed * sprintSpeedMult, 20 * Time.deltaTime) : Mathf.Lerp(currentSpeed, speed, 20 * Time.deltaTime);
@@ -102,7 +114,7 @@ public class Player : MonoBehaviour
             {
                 currentTarget = null;
             }
-            else if (m_attackInput.WasPressedThisFrame() && currentTarget != null)
+            if (m_attackInput.WasPressedThisFrame() && SetCurrentTarget())
             {
                 currentAttack = StartCoroutine(Attack());
             }
@@ -120,9 +132,10 @@ public class Player : MonoBehaviour
                 }
             }
         }
-
+        
         RotateTowards(lookDirection.normalized);
 
+        if (Time.time > comboTime) combo = 0;
     }
 
     IEnumerator Attack()
@@ -133,15 +146,15 @@ public class Player : MonoBehaviour
         lastAttack = attackNum;
         animator.SetInteger("AttackNum", attackNum);
         animator.SetTrigger("Attack");
-        animator.speed = 1;
+        animator.speed = 1 / (1.2f - speedCombo * 0.012f);
         Vector3 startPos = transform.position;
         
         float timer = 0f;
-        while (timer < attackDuration[attackNum] && currentTarget != null)
+        while (timer < attackDuration[attackNum] * (1.2f - speedCombo * 0.012f) && currentTarget != null)
         {
             timer += Time.deltaTime;
             lookDirection = (currentTarget.transform.position - transform.position).normalized;
-            transform.position = Vector3.Lerp(startPos, currentTarget.transform.position - (transform.forward * hitDistance), timer / attackDuration[attackNum]);
+            transform.position = Vector3.Lerp(startPos, currentTarget.transform.position - (transform.forward * hitDistance), timer / (attackDuration[attackNum] * (1.2f - speedCombo * 0.012f)));
             yield return null;
         }
     }
@@ -206,6 +219,7 @@ public class Player : MonoBehaviour
         if (currentAttack != null) StopCoroutine(currentAttack);
         health -= dmg;
         animator.SetTrigger("Hit");
+        combo = 0;
         if (health <= 0)
         {
             Die();
@@ -234,9 +248,65 @@ public class Player : MonoBehaviour
 
     void Hit()
     {
-        currentTarget.IsHit(1);
+        if (currentTarget == null)
+        {
+            attacking = false;
+            return;
+        }
+        if (criticalStrike)
+        {
+            currentTarget.IsHit(3);
+            Combo(3);
+        }
+        else
+        {
+            currentTarget.IsHit(1);
+            Combo(1);
+        }
         if (currentTarget.health <= 0) currentTarget = null;
+        criticalStrike = false;
+        StartCoroutine(CriticalWindow());
         attacking = false;
+    }
+
+    IEnumerator CriticalWindow()
+    {
+        float endTime = Time.time + criticalWindow;
+        while (Time.time < endTime)
+        {
+            Debug.Log("Can Crit");
+            if (m_attackInput.WasPressedThisFrame() && SetCurrentTarget())
+            {
+                criticalStrike = true;
+            }
+            yield return null;
+        }
+    }
+
+    public void Combo(int plus)
+    {
+        comboTime = Time.time + comboResetTime;
+        combo += plus;
+    }
+
+    private bool SetCurrentTarget()
+    {
+        moveInput = m_moveInput.ReadValue<Vector2>();
+        if (moveInput == Vector2.zero) moveInput = Vector2.up;
+
+        Vector3 inputDirection = (cameraRig.right * moveInput.x + cameraRig.forward * moveInput.y).normalized;
+
+        if (Physics.SphereCast(transform.position, 3f, inputDirection, out info, attackRange, enemyMask))
+        {
+            currentTarget = info.collider.gameObject.GetComponent<Enemy>();
+        }
+        else return false;
+        
+        if (Physics.Raycast(transform.position, inputDirection, out info, attackRange, enemyMask))
+        {
+            currentTarget = info.collider.gameObject.GetComponent<Enemy>();
+        }
+        return true;
     }
 
     void Die()
@@ -246,7 +316,7 @@ public class Player : MonoBehaviour
         StartCoroutine(ReloadScene());
     }
 
-    void FreezeAnimation()
+    public void FreezeAnimation()
     {
         animator.speed = 0;
     }
